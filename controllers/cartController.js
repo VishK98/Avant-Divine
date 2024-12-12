@@ -84,9 +84,10 @@ const getCart = async (req, res) => {
 
 // Update cart item quantity
 const updateCartItem = async (req, res) => {
-  const { userId, productId, quantity } = req.body;
+  const { userId, productId, action } = req.body; // action can be "increment" or "decrement"
 
   try {
+    // Find the user's cart
     const cart = await Cart.findOne({ userId });
     if (!cart) {
       return res.status(404).json({
@@ -96,6 +97,7 @@ const updateCartItem = async (req, res) => {
       });
     }
 
+    // Find the specific item in the cart
     const item = cart.items.find(
       (item) => item.productId.toString() === productId
     );
@@ -107,12 +109,35 @@ const updateCartItem = async (req, res) => {
       });
     }
 
-    item.quantity += quantity;
+    // Increment or decrement the quantity
+    if (action === "increment") {
+      item.quantity += 1;
+    } else if (action === "decrement") {
+      if (item.quantity > 1) {
+        item.quantity -= 1;
+      } else {
+        return res.status(400).json({
+          status: false,
+          message: "Cannot decrease quantity below 1",
+          data: {},
+        });
+      }
+    } else {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid action. Use 'increment' or 'decrement'.",
+        data: {},
+      });
+    }
+
+    // Save the updated cart
     await cart.save();
 
     res.status(200).json({
       status: true,
-      message: "Cart item quantity updated",
+      message: `Cart item quantity ${
+        action === "increment" ? "increased" : "decreased"
+      } successfully`,
       data: { cart },
     });
   } catch (error) {
