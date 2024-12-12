@@ -53,8 +53,9 @@ const getCart = async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId }).populate(
       "items.productId",
-      "name price"
+      "name price images" // Added images to populate
     );
+
     if (!cart) {
       return res.status(404).json({
         status: false,
@@ -81,6 +82,7 @@ const getCart = async (req, res) => {
     });
   }
 };
+
 
 // Update cart item quantity
 const updateCartItem = async (req, res) => {
