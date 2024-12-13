@@ -88,13 +88,19 @@ const loginUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user)
+      return res.status(400).json({ message: "User not found", status: false });
 
     if (!user.otpVerified)
-      return res.status(400).json({ message: "Please verify your OTP first" });
+      return res
+        .status(400)
+        .json({ message: "Please verify your OTP first", status: false });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch)
+      return res
+        .status(400)
+        .json({ message: "Invalid credentials", status: false });
 
     // Set isLoggedIn to true
     user.isLoggedIn = true;
@@ -104,9 +110,17 @@ const loginUser = async (req, res) => {
       expiresIn: "1h",
     });
 
-    res.status(200).json({ message: "Login successful", token });
+    // Exclude sensitive data such as password before sending the user details
+    const { password: _, ...userDetails } = user._doc;
+
+    res.status(200).json({
+      message: "Login successful",
+      status: true,
+      token,
+      user: userDetails,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message, status: false });
   }
 };
 
@@ -116,16 +130,18 @@ const logoutUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user) return res.status(400).json({ status: false, message: "User not found" });
 
     // Set isLoggedIn to false
     user.isLoggedIn = false;
     await user.save();
 
-    res.status(200).json({ message: "Logout successful" });
+    // Send a response with status true and a message
+    res.status(200).json({ status: true, message: "Logout successful" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ status: false, message: error.message });
   }
 };
+
 
 module.exports = { registerUser, verifyOtp, loginUser, logoutUser };

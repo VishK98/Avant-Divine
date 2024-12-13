@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   isLoggedIn: {
     type: Boolean,
-    default: false, // Default to false during registration
+    default: false, 
   },
 });
 
